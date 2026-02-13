@@ -1,0 +1,61 @@
+h1 {
+    color: black;
+    font-family: "Lobster Two";
+    font-size: 40px;
+    margin: 0;
+}
+body {
+    font-family: Arial, Helvetica, sans-serif;
+    margin: 0;
+    padding: 20px;
+    background-color: lightgray;
+    color: black;
+}
+p {
+    margin: 0;
+}
+.content {
+    width: 950px;
+    height: 300px;
+    margin: 0 auto;
+    padding: 20px;
+    background-color: white;
+    box-shadow: 0 0 10px rgba(0,0,0,0.7);
+}
+.container {
+    max-width: 1400px;
+    min-width: 300px;
+}
+.header {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 10px;
+}
+.navigation {
+    padding: 8px;
+    font-size: 18px;
+    font-weight: bold;
+    color: black;
+    display: flex;
+    align-items: center;
+    background-color: whitesmoke;
+}
+.navigation a {
+    font-size: 14px;
+    font-weight: bold;
+    text-align: center;
+    padding: 4px 10px;
+    text-decoration: none;
+    color: black;
+}
+.navigation a:hover {
+    color: black;
+    background-color: white;
+}
+.navigation a.split {
+    margin-left: auto;
+}
+.logo-container {
+    display: flex;
+    gap: 10px;
+}
