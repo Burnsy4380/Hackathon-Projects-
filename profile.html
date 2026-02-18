@@ -24,8 +24,28 @@
       <nav class="navigation">
         <a href="index.html">HOME</a>
         <a href="chat.html">CHAT</a>
-        <a href="about.html" class="active">ABOUT US</a>
-        <a href="profile.html" class="split">PROFILE</a>
+        <a href="about.html">ABOUT US</a>
+        <a href="profile.html" class="split active">PROFILE</a>
       </nav>
+      
+      <form>
+        <div class="container"><br>
+          <label for"uname"><b>Username</b></label><br>
+          <input type="text" placeholder="Enter Username" name="uname" required>
+
+          <br><br><label for="psw"><b>Password</b></label><br>
+          <input type="password" placeholder="Enter Password" name="psw" required>
+
+          <br><br><button type="submit">Login</button><br>
+          <label><br>
+            <input type="checkbox" checked="checked" name="remembered">Remember Me
+          </label>
+        </div><hr>
+
+        <div class="container" style="background-color: whitesmoke">
+          <button type="button" class="cancelbutton">Cancel</button>
+          <span class="psw">Forgot <a href="#">password?</a></span>
+        </div>
+      </form>
   </body>
 </html>
