@@ -9,13 +9,16 @@ app.get("/", (req, res) => {
 
 io.on("connection", (socket) => {
   console.log("a user connected");
+
   socket.on("chat message", (msg) => {
     io.emit("chat message", msg);
   });
-});
-io.on("disconnect", () => {
+
+  socket.on("disconnect", () => {
+    console.log("a user disconnected");
+  });
 });
 
-http.listen(3000, () => {
+http.listen(3000, "0.0.0.0", () => {
   console.log("listening on *:3000");
 });
