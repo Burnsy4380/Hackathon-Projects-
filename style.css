@@ -20,9 +20,16 @@ body {
     background-color: white;
     box-shadow: 0 0 10px rgba(0,0,0,0.7);
 }
-.container {
+.profilecontainer{
     max-width: 1400px;
     min-width: 300px;
+    text-align: center;
+    padding: 10px;
+}
+.loginbox {
+    display:inline-block;
+    border: 3px solid black;
+    padding: 20px 30px;
 }
 .header {
     display: flex;
@@ -65,4 +72,28 @@ body {
 .logo-container {
     display: flex;
     gap: 10px;
+}
+.login {
+    background-color: lightgrey;
+    color: black;
+    font-size:16px;
+    font-weight: bold;
+}
+.login:hover {
+    background-color: whitesmoke;
+    color: black;
+    font-size: 16px;
+    font-weight: bold;
+}
+.register {
+    background-color: lightgrey;
+    color: black;
+    font-size:16px;
+    font-weight: bold;
+}
+.register:hover {
+    background-color: whitesmoke;
+    color: black;
+    font-size: 16px;
+    font-weight: bold;
 }
