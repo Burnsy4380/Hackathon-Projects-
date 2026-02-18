@@ -1,31 +1,38 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
   <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
-    <title>JackAces</title>
-    <link rel="icon" type="image/x-con" href="JackAces.png">
-    <link rel="stylesheet" href="style.css">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Lobster+Two:ital,wght@0,400;0,700;1,400;1,700&display=swap" rel="stylesheet">
+    <title>Socket.IO Chat</title>
   </head>
   <body>
+<ul id="messages"></ul>
 
-    <div class="content">
-      
-      <header class="header">
-        <div class="logo-container">
-          <img src="JackAces.png" alt="Page Logo" width="50px" height="50px">
-          <h1>JackAces</h1>
-        </div>
-      </header>
+  <form id="form" action="">
+    <input id="input" autocomplete="off" />
+    <button>Send</button>
+  </form>
 
-      <nav class="navigation">
-        <a href="index.html">HOME</a>
-        <a href="chat.html">CHAT</a>
-        <a href="about.html">ABOUT US</a>
-        <a href="profile.html" class="split">PROFILE</a>
-      </nav>
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    var socket = io();
+
+    var form = document.getElementById('form');
+    var input = document.getElementById('input');
+
+    form.addEventListener('submit', function(e) {
+      e.preventDefault();
+      if (input.value) {
+        socket.emit('chat message', input.value);
+        input.value = '';
+      }
+    });
+
+    socket.on('chat message', function(msg) {
+      var item = document.createElement('li');
+      item.textContent = msg;
+      messages.appendChild(item);
+      window.scrollTo(0, document.body.scrollHeight);
+    });
+
+    </script>
   </body>
 </html>
