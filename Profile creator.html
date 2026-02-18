@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Profile creator</title>
+        <link 
+    </head>
+    <body>
+
+        <h2> Create Your Profile </h2>
+
+        <form id="Profile Form">
+            <input type="text" id="username" placeholder="Username" required><br><br>
+
+            <textarea id="bio" placeholder="Short bio"></textarea><br><br>
+
+            <input type="file" id="avatar" accept="image/*"><br><br>
+
+            <button type="submit">Create Profile</button>
+        </form>
+
+        <hr>
+
+        <div id="profileDisplay" style="display:none;">
+            <h2>Profile</h2>
+            <img id="displayAvatar" width="120"><br>
+            <h3 id="displayUsername"></h3>
+            <p id="displayBio"></p>
+        </div>
+
+        <script src="script.js"></script>
+    </body>
+</html>
