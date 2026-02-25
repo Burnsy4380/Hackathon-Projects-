@@ -1,36 +1,53 @@
 <!DOCTYPE html>
 <html>
-    <head>
-        <title>Profile creator</title>
-        <link ref="stylesheet" href="style.css">
-        <a href="index.html">
-            <button>Home</button>
-    </head>
-    <body>
+<head>
+  <title>Create Profile</title>
+  <style>
+    body {
+      font-family: Arial;
+      text-align: center;
+      margin-top: 50px;
+    }
+    input, textarea {
+      width: 250px;
+      padding: 8px;
+      margin: 5px;
+    }
+    button {
+      padding: 10px 20px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
 
-        <h2> Create Your Profile </h2>
+<h1>Create Your Profile</h1>
 
-        <form id="Profile Form">
-            <input type="text" id="username" placeholder="Username" required><br><br>
+<form id="profileForm">
+  <input type="text" id="username" placeholder="Username" required><br>
+  <textarea id="bio" placeholder="Your bio"></textarea><br>
+  <button type="submit">Save Profile</button>
+</form>
 
-            <textarea id="bio" placeholder="Short bio"></textarea><br><br>
+<br>
+<a href="index.html">Go to Home</a>
 
-            <input type="file" id="avatar" accept="image/*"><br><br>
+<script>
+document.getElementById("profileForm").addEventListener("submit", function(e) {
+  e.preventDefault();
 
-            <button type="submit">Create Profile</button>
-        </form>
+  const profile = {
+    username: document.getElementById("username").value,
+    bio: document.getElementById("bio").value
+  };
 
-        <hr>
+  // Save profile to localStorage
+  localStorage.setItem("profile", JSON.stringify(profile));
 
-        <div id="profileDisplay" style="display:none;">
-            <h2>Profile</h2>
-            <img id="displayAvatar" width="120"><br>
-            <h3 id="displayUsername"></h3>
-            <p id="displayBio"></p>
-        </div>
+  // Redirect to home page
+  window.location.href = "index.html";
+});
+</script>
 
-        <script src="script.js"></script>
-    </body>
-
+</body>
 </html>
-
