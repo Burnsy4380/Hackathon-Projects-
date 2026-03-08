@@ -1,3 +1,4 @@
+const pool = require('./db');
 const express = require("express");
 const app = express();
 const http = require("http").createServer(app);
@@ -7,15 +8,89 @@ app.get("/", (req, res) => {
   res.sendFile(__dirname + "/index.html");
 });
 
-io.on("connection", (socket) => {
-  console.log("a user connected");
+async function ensurePresetRooms() {
+  const presetRooms = ['General', 'Gaming', 'Support', 'Off Topic'];
 
-  socket.on("chat message", (msg) => {
-    io.emit("chat message", msg);
+  for (const room of presetRooms) {
+    await pool.query(
+      `INSERT INTO rooms (name)
+       VALUES ($1)
+       ON CONFLICT (name) DO NOTHING`,
+      [room]
+    );
+  }
+
+  console.log("Preset rooms ensured.");
+}
+ensurePresetRooms();
+
+io.on("connection", (socket) => {
+  console.log("a user connected:", socket.id);
+
+  // User joins a room
+  socket.on("joinRoom", async (roomName) => {
+    try {
+      // Ensure room exists (preset or created on demand)
+      const roomResult = await pool.query(
+        `INSERT INTO rooms (name)
+         VALUES ($1)
+         ON CONFLICT (name) DO UPDATE SET name = EXCLUDED.name
+         RETURNING id`,
+        [roomName]
+      );
+
+      const roomId = roomResult.rows[0].id;
+
+      socket.join(roomName);
+      console.log(`User ${socket.id} joined room: ${roomName}`);
+
+      // Load message history
+      const messages = await pool.query(
+        `SELECT sender, content, timestamp
+         FROM messages
+         WHERE room_id = $1
+         ORDER BY timestamp ASC`,
+        [roomId]
+      );
+
+      socket.emit("roomHistory", messages.rows);
+
+    } catch (err) {
+      console.error("Error joining room:", err);
+    }
+  });
+// User sends a message
+  socket.on("chatMessage", async ({ roomName, sender, content }) => {
+    try {
+      // Get room ID
+      const room = await pool.query(
+        `SELECT id FROM rooms WHERE name = $1`,
+        [roomName]
+      );
+
+      const roomId = room.rows[0].id;
+
+      // Save message to DB
+      await pool.query(
+        `INSERT INTO messages (room_id, sender, content)
+         VALUES ($1, $2, $3)`,
+        [roomId, sender, content]
+      );
+
+      // Broadcast to room
+      io.to(roomName).emit("message", {
+        sender,
+        content,
+        timestamp: new Date()
+      });
+
+    } catch (err) {
+      console.error("Error sending message:", err);
+    }
   });
 
   socket.on("disconnect", () => {
-    console.log("a user disconnected");
+    console.log("a user disconnected:", socket.id);
   });
 });
 
