@@ -4,6 +4,8 @@ const app = express();
 const http = require("http").createServer(app);
 const io = require("socket.io")(http);
 
+const path = require("path");
+app.use(express.static(path.join(__dirname)));
 app.get("/", (req, res) => {
   res.sendFile(__dirname + "/index.html");
 });
@@ -62,6 +64,7 @@ io.on("connection", (socket) => {
 // User sends a message
   socket.on("chatMessage", async ({ roomName, sender, content }) => {
     try {
+      console.log("Received message:", sender, content, "in room", roomName);
       // Get room ID
       const room = await pool.query(
         `SELECT id FROM rooms WHERE name = $1`,
@@ -94,6 +97,7 @@ io.on("connection", (socket) => {
   });
 });
 
-http.listen(3000, "0.0.0.0", () => {
-  console.log("listening on *:3000");
+server.listen(3000, "0.0.0.0", () => {
+  console.log("Server running on port 3000");
 });
+

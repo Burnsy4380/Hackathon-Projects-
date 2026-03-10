@@ -1,3 +1,5 @@
+console.log("chat-script.js is running");
+
 // Connect to the server
 const socket = io();
 
@@ -29,6 +31,7 @@ socket.on("roomHistory", (messages) => {
 // Send a message
 document.getElementById("sendBtn").addEventListener("click", () => {
   const content = document.getElementById("messageInput").value.trim();
+  console.log("Sending message:", content);
   if (!content || !currentRoom) return;
 
   socket.emit("chatMessage", {
