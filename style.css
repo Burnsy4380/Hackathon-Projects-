@@ -182,7 +182,7 @@ h2 {
     color: white;
 }
 .room-select button:hover {
-    background: lightgrey;
+    background: rgb(112, 112, 112);
 }
 #currentRoomLabel {
     margin-bottom: 12px;
@@ -233,5 +233,5 @@ h2 {
     color: white;
 }
 .message-input button:hover {
-    background: lightgrey;
+    background: rgb(112, 112, 112);
 }
