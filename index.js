@@ -1,17 +1,74 @@
-const pool = require('./db');
 const express = require("express");
-const app = express();
-const http = require("http").createServer(app);
-const io = require("socket.io")(http);
+const bcrypt = require("bcryptjs");
+const http = require("http");
+const { Server } = require("socket.io");
+const pool = require("./db"); // uses your db.js
 
-const path = require("path");
-app.use(express.static(path.join(__dirname)));
-app.get("/", (req, res) => {
-  res.sendFile(__dirname + "/index.html");
+const app = express();
+const server = http.createServer(app);
+const io = new Server(server);
+
+// Middleware
+app.use(express.json());
+app.use(express.static("public")); // serve chat.html, profile.html, scripts, css
+
+// -----------------------------
+// USER AUTHENTICATION
+// -----------------------------
+
+// REGISTER
+app.post("/create-profile", async (req, res) => {
+  try {
+    const { username, password } = req.body;
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    await pool.query(
+      `INSERT INTO users (username, password)
+       VALUES ($1, $2)`,
+      [username, hashedPassword]
+    );
+
+    res.json({ message: "Profile created" });
+
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Error creating profile" });
+  }
 });
 
+// LOGIN
+app.post("/login", async (req, res) => {
+  const { username, password } = req.body;
+
+  const result = await pool.query(
+    `SELECT * FROM users WHERE username = $1`,
+    [username]
+  );
+
+  const user = result.rows[0];
+
+  if (!user) {
+    return res.json({ message: "User not found" });
+  }
+
+  const validPassword = await bcrypt.compare(password, user.password);
+
+  if (!validPassword) {
+    return res.json({ message: "Incorrect password" });
+  }
+
+  res.json({
+    message: "Login successful",
+    username: user.username
+  });
+});
+
+// -----------------------------
+// PRESET ROOMS
+// -----------------------------
 async function ensurePresetRooms() {
-  const presetRooms = ['General', 'Gaming', 'Support', 'Off Topic'];
+  const presetRooms = ["General", "Gaming", "Support", "Off Topic"];
 
   for (const room of presetRooms) {
     await pool.query(
@@ -26,13 +83,16 @@ async function ensurePresetRooms() {
 }
 ensurePresetRooms();
 
+// -----------------------------
+// SOCKET.IO CHAT SYSTEM
+// -----------------------------
 io.on("connection", (socket) => {
-  console.log("a user connected:", socket.id);
+  console.log("User connected:", socket.id);
 
-  // User joins a room
-  socket.on("joinRoom", async (roomName) => {
+  // JOIN ROOM
+  socket.on("join room", async (roomName) => {
     try {
-      // Ensure room exists (preset or created on demand)
+      // Ensure room exists
       const roomResult = await pool.query(
         `INSERT INTO rooms (name)
          VALUES ($1)
@@ -61,27 +121,27 @@ io.on("connection", (socket) => {
       console.error("Error joining room:", err);
     }
   });
-// User sends a message
-  socket.on("chatMessage", async ({ roomName, sender, content }) => {
+
+  // SEND MESSAGE
+  socket.on("chat message", async ({ room, sender, content }) => {
     try {
-      console.log("Received message:", sender, content, "in room", roomName);
-      // Get room ID
-      const room = await pool.query(
+      const roomResult = await pool.query(
         `SELECT id FROM rooms WHERE name = $1`,
-        [roomName]
+        [room]
       );
 
-      const roomId = room.rows[0].id;
+      const roomId = roomResult.rows[0].id;
 
-      // Save message to DB
+      // Save message
       await pool.query(
-        `INSERT INTO messages (room_id, sender, content)
-         VALUES ($1, $2, $3)`,
+        `INSERT INTO messages (room_id, sender, content, timestamp)
+         VALUES ($1, $2, $3, NOW())`,
         [roomId, sender, content]
       );
 
-      // Broadcast to room
-      io.to(roomName).emit("message", {
+      // Broadcast
+      io.to(room).emit("chat message", {
+        room,
         sender,
         content,
         timestamp: new Date()
@@ -93,12 +153,13 @@ io.on("connection", (socket) => {
   });
 
   socket.on("disconnect", () => {
-    console.log("a user disconnected:", socket.id);
+    console.log("User disconnected:", socket.id);
   });
 });
 
-http.listen(3000, "0.0.0.0", () => {
-  console.log("Server running on port 3000");
+// -----------------------------
+// START SERVER
+// -----------------------------
+server.listen(3000, () => {
+  console.log("Server running on http://localhost:3000");
 });
-
-

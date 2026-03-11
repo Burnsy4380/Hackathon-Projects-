@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+    <title>JackAces</title>
+    <link rel="icon" type="image/x-con" href="JackAces.png">
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Lobster+Two:ital,wght@0,400;0,700;1,400;1,700&display=swap" rel="stylesheet">
+  </head>
+  <body>
+
+    <div class="content">
+      
+      <header class="header">
+        <div class="logo-container">
+          <img src="JackAces.png" alt="Page Logo" width="60px" height="60px">
+          <h1>JackAces</h1>
+        </div>
+      </header>
+
+      <nav class="navigation">
+        <a href="index.html">HOME</a>
+        <a href="chat.html" class="active">CHAT</a>
+        <a href="about.html">ABOUT US</a>
+        <a href="profile.html" class="split">PROFILE</a>
+      </nav>
+      <div class="chat-container">
+
+  <!-- Room selection -->
+  <div class="room-select">
+    <select id="roomSelect">
+      <option value="General">General</option>
+      <option value="Gaming">Gaming</option>
+      <option value="Support">Support</option>
+      <option value="Off Topic">Off Topic</option>
+    </select>
+    <button id="joinRoomBtn">Join Room</button>
+  </div>
+
+  <!-- Current room label -->
+  <h2 id="currentRoomLabel">No room joined</h2>
+
+  <!-- Messages -->
+  <div id="messages" class="messages"></div>
+
+  <!-- Message input -->
+  <div class="message-input">
+    <input id="messageInput" type="text" placeholder="Type a message...">
+    <button id="sendBtn">Send</button>
+  </div>
+
+</div>
+<script src="/socket.io/socket.io.js"></script>
+<script>
+
+const socket = io();
+let currentRoom = null;
+
+/* get logged in username */
+const username = localStorage.getItem("username");
+
+/* force login if no username */
+if (!username) {
+  window.location.href = "profile.html";
+}
+
+/* join room */
+document.getElementById("joinRoomBtn").onclick = () => {
+  const room = document.getElementById("roomSelect").value;
+  currentRoom = room;
+
+  socket.emit("join room", room);
+
+  document.getElementById("currentRoomLabel").textContent = "Room: " + room;
+  document.getElementById("messages").innerHTML = "";
+};
+
+/* send message */
+document.getElementById("sendBtn").onclick = () => {
+  const input = document.getElementById("messageInput");
+
+  if (!currentRoom) return;
+
+  socket.emit("chat message", {
+    room: currentRoom,
+    sender: username,
+    content: input.value
+  });
+
+  input.value = "";
+};
+
+/* receive message */
+socket.on("chat message", (data) => {
+  if (data.room !== currentRoom) return;
+
+  const messageDiv = document.createElement("div");
+  messageDiv.textContent = `${data.sender}: ${data.content}`;
+
+  document.getElementById("messages").appendChild(messageDiv);
+});
+
+</script>
+
+  </body>
+</html>

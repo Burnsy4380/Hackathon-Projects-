@@ -1,102 +1,112 @@
 const express = require("express");
-const mongoose = require("mongoose");
-const cors = require("cors");
-const path = require("path");
 const bcrypt = require("bcrypt");
 const http = require("http");
 const { Server } = require("socket.io");
+const { Pool } = require("pg");
 
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
 
-app.use(cors());
+// Middleware
 app.use(express.json());
-app.use(express.static(path.join(__dirname, "public")));
+app.use(express.static("public"));
 
-
-// MongoDB connection
-mongoose.connect("mongodb://127.0.0.1:27017/chatProfiles", {
-  useNewUrlParser: true,
-  useUnifiedTopology: true
-})
-.then(() => console.log("MongoDB Connected"))
-.catch(err => console.log(err));
-
-
-// Profile Schema
-const ProfileSchema = new mongoose.Schema({
-  username: String,
-  email: String,
-  password: String
+// PostgreSQL connection
+const pool = new Pool({
+  user: "postgres",
+  host: "localhost",
+  database: "chatapp",
+  password: "JackAces",
+  port: 5432
 });
-
-const Profile = mongoose.model("Profile", ProfileSchema);
-
 
 // CREATE PROFILE (REGISTER)
 app.post("/create-profile", async (req, res) => {
-
   try {
-
-    const { username, email, password } = req.body;
+    const { username, password } = req.body;
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    const newProfile = new Profile({
-      username: username,
-      email: email,
-      password: hashedPassword
-    });
+    await pool.query(
+      `INSERT INTO users (username, password)
+       VALUES ($1, $2)`,
+      [username, hashedPassword]
+    );
 
-    await newProfile.save();
-
-    res.json({ message: "Profile saved successfully!" });
+    res.json({ message: "Profile created" });
 
   } catch (error) {
-
-    res.status(500).json({ error: "Error saving profile" });
-
+    res.status(500).json({ error: "Error creating profile" });
   }
-
 });
 
-
 // LOGIN ROUTE
-app.post("/login", async (req,res)=>{
-
+app.post("/login", async (req, res) => {
   const { username, password } = req.body;
 
-  const user = await Profile.findOne({ username });
+  const result = await pool.query(
+    `SELECT * FROM users WHERE username = $1`,
+    [username]
+  );
 
-  if(!user){
+  const user = result.rows[0];
+
+  if (!user) {
     return res.json({ message: "User not found" });
   }
 
-  const validPassword = await bcrypt.compare(password,user.password);
+  const validPassword = await bcrypt.compare(password, user.password);
 
-  if(!validPassword){
+  if (!validPassword) {
     return res.json({ message: "Incorrect password" });
   }
 
-  res.json({ message: "Login successful" });
-
+  res.json({
+    message: "Login successful",
+    username: user.username
+  });
 });
-
 
 // SOCKET.IO CHAT
-io.on("connection",(socket)=>{
-
+io.on("connection", (socket) => {
   console.log("User connected");
 
-  socket.on("chat message",(msg)=>{
+  // User joins a room
+  socket.on("join room", async (room) => {
+    socket.join(room);
 
-    io.emit("chat message",msg);
+    // Load room history from PostgreSQL
+    const result = await pool.query(
+      `SELECT sender, content, timestamp
+       FROM room_messages
+       WHERE room_name = $1
+       ORDER BY timestamp ASC`,
+      [room]
+    );
 
+    socket.emit("roomHistory", result.rows);
   });
 
-});
+  // User sends a message
+  socket.on("chat message", async ({ room, sender, content }) => {
 
+    // Save message to PostgreSQL
+    await pool.query(
+      `INSERT INTO room_messages (room_name, sender, content, timestamp)
+       VALUES ($1, $2, $3, NOW())`,
+      [room, sender, content]
+    );
+
+    // Broadcast to the room only
+    io.to(room).emit("chat message", {
+      room,
+      sender,
+      content,
+      timestamp: new Date()
+    });
+  });
+});
 
 // Start server
 server.listen(3000, () => {
