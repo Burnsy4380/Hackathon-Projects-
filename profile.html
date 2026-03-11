@@ -1,49 +1,127 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
-    <title>JackAces</title>
-    <link rel="icon" type="image/x-con" href="JackAces.png">
-    <link rel="stylesheet" href="style.css">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Lobster+Two:ital,wght@0,400;0,700;1,400;1,700&display=swap" rel="stylesheet">
-  </head>
-  <body>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+<title>JackAces</title>
 
-    <div class="content">
-      
-      <header class="header">
-        <div class="logo-container">
-          <img src="JackAces.png" alt="Page Logo" width="60px" height="60px">
-          <h1>JackAces</h1>
-        </div>
-      </header>
+<link rel="icon" type="image/x-icon" href="JackAces.png">
+<link rel="stylesheet" href="style.css">
 
-      <nav class="navigation">
-        <a href="index.html">HOME</a>
-        <a href="chat.html">CHAT</a>
-        <a href="about.html">ABOUT US</a>
-        <a href="profile.html" class="split active">PROFILE</a>
-      </nav>
-      
-      <form><br>
-        <div class="profilecontainer">
-          <div class="loginbox">
-          <label for"uname"><b>USERNAME</b></label><br>
-          <input type="text" placeholder="Enter Username" name="uname" required>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 
-          <br><br><label for="psw"><b>PASSWORD</b></label><br>
-          <input type="password" placeholder="Enter Password" name="psw" required>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Lobster+Two:ital,wght@0,400;0,700;1,400;1,700&display=swap" rel="stylesheet">
+</head>
 
-          <br><br><button class="login" type="submit">LOGIN</button>
-          <button class="register" type="submit">REGISTER</button><br>
-          </div>
-        </div>
-      </form>
-  </body>
+<body>
+
+<div class="content">
+
+<header class="header">
+<div class="logo-container">
+<img src="JackAces.png" alt="Page Logo" width="60px" height="60px">
+<h1>JackAces</h1>
+</div>
+</header>
+
+<nav class="navigation">
+<a href="index.html">HOME</a>
+<a href="chat.html">CHAT</a>
+<a href="about.html">ABOUT US</a>
+<a href="profile.html" class="split active">PROFILE</a>
+</nav>
+
+<form id="profileForm"><br>
+
+<div class="profilecontainer">
+<div class="loginbox">
+
+<label for="username"><b>USERNAME</b></label><br>
+<input type="text" id="username" placeholder="Enter Username" required>
+
+<br><br>
+
+<label for="password"><b>PASSWORD</b></label><br>
+<input type="password" id="password" placeholder="Enter Password" required>
+
+<br><br>
+
+<button class="login" type="submit">LOGIN</button>
+<button class="register" type="button" onclick="registerUser()">REGISTER</button>
+
+</div>
+</div>
+
+</form>
+
+<script>
+
+const form = document.getElementById("profileForm");
+
+form.addEventListener("submit", async function(e){
+
+e.preventDefault();
+
+const username = document.getElementById("username").value;
+const password = document.getElementById("password").value;
+
+const response = await fetch("/login",{
+
+method:"POST",
+
+headers:{
+"Content-Type":"application/json"
+},
+
+body:JSON.stringify({
+username:username,
+password:password
+})
+
+});
+
+const data = await response.json();
+
+alert(data.message);
+
+if(data.message === "Login successful"){
+localStorage.setItem("username",username);
+window.location.href="chat.html";
+}
+
+});
+
+async function registerUser(){
+
+const username = document.getElementById("username").value;
+const password = document.getElementById("password").value;
+
+const response = await fetch("/create-profile",{
+
+method:"POST",
+
+headers:{
+"Content-Type":"application/json"
+},
+
+body:JSON.stringify({
+username:username,
+password:password
+})
+
+});
+
+const data = await response.json();
+
+alert(data.message);
+
+}
+
+</script>
+
+</div>
+
+</body>
 </html>
