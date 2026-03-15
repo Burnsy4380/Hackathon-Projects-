@@ -124,33 +124,52 @@ io.on("connection", (socket) => {
 
   // SEND MESSAGE
   socket.on("chat message", async ({ room, sender, content }) => {
-    try {
-      const roomResult = await pool.query(
-        `SELECT id FROM rooms WHERE name = $1`,
-        [room]
-      );
+  try {
+    const MAX_LINE_LENGTH = 120;
+    const MAX_WORDS = 50;
 
-      const roomId = roomResult.rows[0].id;
-
-      // Save message
-      await pool.query(
-        `INSERT INTO messages (room_id, sender, content, timestamp)
-         VALUES ($1, $2, $3, NOW())`,
-        [roomId, sender, content]
-      );
-
-      // Broadcast
-      io.to(room).emit("chat message", {
-        room,
-        sender,
-        content,
-        timestamp: new Date()
-      });
-
-    } catch (err) {
-      console.error("Error sending message:", err);
+    // Line length check
+    const lines = content.split("\n");
+    for (const line of lines) {
+      if (line.length > MAX_LINE_LENGTH) {
+        socket.emit("errorMessage", `A single line cannot exceed ${MAX_LINE_LENGTH} characters.`);
+        return;
+      }
     }
-  });
+
+    // Word count check
+    const wordCount = content.trim().split(/\s+/).length;
+    if (wordCount > MAX_WORDS) {
+      socket.emit("errorMessage", `Messages cannot exceed ${MAX_WORDS} words.`);
+      return;
+    }
+
+    // Continue with your existing logic
+    const roomResult = await pool.query(
+      `SELECT id FROM rooms WHERE name = $1`,
+      [room]
+    );
+
+    const roomId = roomResult.rows[0].id;
+
+    await pool.query(
+      `INSERT INTO messages (room_id, sender, content, timestamp)
+       VALUES ($1, $2, $3, NOW())`,
+      [roomId, sender, content]
+    );
+
+    io.to(room).emit("chat message", {
+      room,
+      sender,
+      content,
+      timestamp: new Date()
+    });
+
+  } catch (err) {
+    console.error("Error sending message:", err);
+  }
+});
+
 
   socket.on("disconnect", () => {
     console.log("User disconnected:", socket.id);

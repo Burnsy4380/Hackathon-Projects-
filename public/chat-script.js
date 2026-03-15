@@ -52,6 +52,10 @@ socket.on("chat message", (msg) => {
   if (msg.room !== currentRoom) return;
   addMessage(msg.sender, msg.content, msg.timestamp);
 });
+// Receive error messages from the server
+socket.on("errorMessage", (msg) => {
+  alert(msg); // or console.log(msg);
+});
 
 // Display a message
 function addMessage(sender, content, timestamp) {
