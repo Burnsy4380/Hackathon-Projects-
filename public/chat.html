@@ -62,6 +62,14 @@
 const socket = io();
 let currentRoom = null;
 
+/* helper: scroll to bottom */
+function scrollToBottom() {
+  const messagesDiv = document.getElementById("messages");
+  messagesDiv.scrollTop = messagesDiv.scrollHeight;
+}
+
+
+
 /* get logged in username */
 const username = localStorage.getItem("username");
 
@@ -101,10 +109,28 @@ socket.on("chat message", (data) => {
   if (data.room !== currentRoom) return;
 
   const messageDiv = document.createElement("div");
+  messageDiv.classList.add("message");
   messageDiv.textContent = `${data.sender}: ${data.content}`;
 
   document.getElementById("messages").appendChild(messageDiv);
 });
+
+
+socket.on("roomHistory", (messages) => {
+  const messagesDiv = document.getElementById("messages");
+  messagesDiv.innerHTML = "";
+
+  messages.forEach(msg => {
+    const messageDiv = document.createElement("div");
+    messageDiv.classList.add("message");
+    messageDiv.textContent = `${msg.sender}: ${msg.content}`;
+    messagesDiv.appendChild(messageDiv);
+  });
+
+  // Scroll only when joining a room
+  scrollToBottom();
+});
+
 
 </script>
 

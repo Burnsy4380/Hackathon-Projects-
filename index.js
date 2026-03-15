@@ -125,8 +125,8 @@ io.on("connection", (socket) => {
   // SEND MESSAGE
   socket.on("chat message", async ({ room, sender, content }) => {
   try {
-    const MAX_LINE_LENGTH = 120;
-    const MAX_WORDS = 50;
+    const MAX_LINE_LENGTH = 300;
+    const MAX_WORDS = 200;
 
     // Line length check
     const lines = content.split("\n");

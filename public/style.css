@@ -218,8 +218,15 @@ h2 {
   white-space: pre-wrap;
   word-wrap: break-word;
   overflow-wrap: break-word;
-  word-break: break-word;
+  word-break: break-all;
 }
+.message * {
+  white-space: inherit;
+  overflow-wrap: inherit;
+  word-wrap: inherit;
+  word-break: inherit;
+}
+
 .timestamp {
   font-size: 0.75em;
   color: #777;
