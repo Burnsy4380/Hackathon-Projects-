@@ -54,6 +54,11 @@
     <input id="messageInput" type="text" placeholder="Type a message...">
     <button id="sendBtn">Send</button>
   </div>
+<!-- File upload controls -->
+<div class="file-upload">
+  <input type="file" id="fileInput">
+  <button id="sendFileBtn">Send File</button>
+</div>
 
 </div>
 <script src="/socket.io/socket.io.js"></script>
@@ -67,8 +72,6 @@ function scrollToBottom() {
   const messagesDiv = document.getElementById("messages");
   messagesDiv.scrollTop = messagesDiv.scrollHeight;
 }
-
-
 
 /* get logged in username */
 const username = localStorage.getItem("username");
@@ -104,7 +107,28 @@ document.getElementById("sendBtn").onclick = () => {
   input.value = "";
 };
 
-/* receive message */
+/* send file */
+document.getElementById("sendFileBtn").onclick = async () => {
+  console.log("Upload button clicked");
+  if (!currentRoom) return alert("Join a room first");
+
+  const file = document.getElementById("fileInput").files[0];
+  if (!file) return alert("Please select a file");
+
+  const formData = new FormData();
+  formData.append("file", file);
+  formData.append("sender", username);
+  formData.append("room", currentRoom);
+
+  await fetch("/upload", {
+    method: "POST",
+    body: formData
+  });
+
+  document.getElementById("fileInput").value = "";
+};
+
+/* receive text message */
 socket.on("chat message", (data) => {
   if (data.room !== currentRoom) return;
 
@@ -113,9 +137,10 @@ socket.on("chat message", (data) => {
   messageDiv.textContent = `${data.sender}: ${data.content}`;
 
   document.getElementById("messages").appendChild(messageDiv);
+  scrollToBottom();
 });
 
-
+/* receive room history */
 socket.on("roomHistory", (messages) => {
   const messagesDiv = document.getElementById("messages");
   messagesDiv.innerHTML = "";
@@ -123,14 +148,44 @@ socket.on("roomHistory", (messages) => {
   messages.forEach(msg => {
     const messageDiv = document.createElement("div");
     messageDiv.classList.add("message");
-    messageDiv.textContent = `${msg.sender}: ${msg.content}`;
+
+    if (msg.type === "file") {
+      // File message
+      const link = document.createElement("a");
+      link.href = msg.file_url;
+      link.textContent = `${msg.sender} sent: ${msg.file_name}`;
+      link.target = "_blank";
+      messageDiv.appendChild(link);
+    } else {
+      // Text message
+      messageDiv.textContent = `${msg.sender}: ${msg.content}`;
+    }
+
     messagesDiv.appendChild(messageDiv);
   });
 
-  // Scroll only when joining a room
   scrollToBottom();
 });
 
+/* receive file message (real-time) */
+socket.on("fileMessage", (data) => {
+  if (data.room !== currentRoom) return;
+
+  const messagesDiv = document.getElementById("messages");
+
+  const messageDiv = document.createElement("div");
+  messageDiv.classList.add("message");
+
+  const link = document.createElement("a");
+  link.href = data.url;
+  link.textContent = `${data.sender} sent: ${data.fileName}`;
+  link.target = "_blank";
+
+  messageDiv.appendChild(link);
+  messagesDiv.appendChild(messageDiv);
+
+  scrollToBottom();
+});
 
 </script>
 

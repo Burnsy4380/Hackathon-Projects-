@@ -3,6 +3,8 @@ const bcrypt = require("bcrypt");
 const http = require("http");
 const { Server } = require("socket.io");
 const { Pool } = require("pg");
+const multer = require("multer");
+const path = require("path");
 
 const app = express();
 const server = http.createServer(app);
@@ -11,6 +13,17 @@ const io = new Server(server);
 // Middleware
 app.use(express.json());
 app.use(express.static("public"));
+app.use("/uploads", express.static("uploads"));
+
+// Multer storage
+const storage = multer.diskStorage({
+  destination: "uploads/",
+  filename: (req, file, cb) => {
+    cb(null, Date.now() + path.extname(file.originalname));
+  }
+});
+
+const upload = multer({ storage });
 
 // PostgreSQL connection
 const pool = new Pool({
@@ -68,6 +81,31 @@ app.post("/login", async (req, res) => {
   });
 });
 
+// FILE UPLOAD ROUTE
+app.post("/upload", upload.single("file"), async (req, res) => {
+  console.log("UPLOAD ROUTE HIT");
+  const fileUrl = `/uploads/${req.file.filename}`;
+  const fileName = req.file.originalname;
+  const sender = req.body.sender;
+  const room = req.body.room;
+
+  await pool.query(
+    `INSERT INTO messages (room_id, sender, content, timestamp, type, file_url, file_name)
+     VALUES ($1, $2, NULL, NOW(), 'file', $3, $4)`,
+    [room, sender, fileUrl, fileName]
+  );
+
+  io.to(room).emit("fileMessage", {
+    room,
+    sender,
+    fileName,
+    url: fileUrl,
+    timestamp: new Date()
+  });
+
+  res.json({ status: "ok" });
+});
+
 // SOCKET.IO CHAT
 io.on("connection", (socket) => {
   console.log("User connected");
@@ -78,9 +116,9 @@ io.on("connection", (socket) => {
 
     // Load room history from PostgreSQL
     const result = await pool.query(
-      `SELECT sender, content, timestamp
-       FROM room_messages
-       WHERE room_name = $1
+      `SELECT sender, content, timestamp, type, file_url, file_name
+       FROM messages
+       WHERE room_id = $1
        ORDER BY timestamp ASC`,
       [room]
     );
@@ -93,8 +131,8 @@ io.on("connection", (socket) => {
 
     // Save message to PostgreSQL
     await pool.query(
-      `INSERT INTO room_messages (room_name, sender, content, timestamp)
-       VALUES ($1, $2, $3, NOW())`,
+      `INSERT INTO messages (room_id, sender, content, timestamp, type)
+       VALUES ($1, $2, $3, NOW(), 'text')`,
       [room, sender, content]
     );
 
